@@ -36,7 +36,7 @@ fprintf(['Plotting data with + indicating (y = 1) examples and o ' ...
 plotData(X, y);
 
 % Put some labels 
-hold on;
+%hold on;
 % Labels and Legend
 xlabel('Exam 1 score')
 ylabel('Exam 2 score')
