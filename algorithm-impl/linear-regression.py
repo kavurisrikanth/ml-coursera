@@ -2,14 +2,22 @@ import os
 import csv
 import random
 
+def print_array(arr: list):
+    print('Length: ' + str(len(arr)))
+    print(arr)
+    print()
+
 def hypothesis(theta: list, X: list) -> float:
     '''
     Returns the hypothesis function result for the given theta and X vectors.
     '''
     m = len(theta)
     ans = 0.0
-    # print(theta)
-    # print(X)
+
+    # print('theta')
+    # print_array(theta)
+    # print('X')
+    # print_array(X)
 
     for i in range(m):
         ans += theta[i] * X[i]
@@ -20,18 +28,27 @@ def cost(y: list, theta: list, hypo: list) -> float:
     m = len(y)
     ans = 0.0
 
+    # print('Hypothesis')
+    # print_array(hypo)
+    # print('y')
+    # print_array(y)
+
     for i in range(m):
         ans += ((hypo[i] - y[i]) ** 2)
     
     ans /= (2 * m)
     return ans
 
-def apply(X: list, y: list) -> list:
-    m = len(X)
+def apply(X: list, y: list, num_iter=100) -> list:
+    m = len(X[0])
     theta = [0] * (m + 1)
-    hypo = [0] * m
-    alpha = 0.05
+    hypo = [0] * len(y)
+    alpha = 0.35
     min_cost = float('inf')
+    first = True
+
+    # print('theta in apply')
+    # print_array(theta)
 
     # Add bias
     for x in X:
@@ -39,20 +56,38 @@ def apply(X: list, y: list) -> list:
     for i in range(m):
         hypo[i] = hypothesis(theta, X[i])
 
+    iter = 0
+
     while True:
         cur_cost = cost(y, theta, hypo)
-        if cur_cost < min_cost:
+
+        
+        
+        # f.write('iteration #: ' + str(iter) + '\n')
+        # f.write('min cost: ' + str(min_cost) + '\n')
+        # f.write('current cost: ' + str(cur_cost) + '\n')
+        # f.write('\n')
+
+        if first:
+            first = False
             min_cost = cur_cost
             min_theta = theta
         else:
-            break
+            if cur_cost < min_cost:
+                min_cost = cur_cost
+                min_theta = theta
 
         # Change theta using gradient descent
         for j in range(m + 1):
             gradient = 0
             for i in range(m):
                 gradient += ((hypo[i] - y[i]) * X[j][i])
+            print('gradient: ' + str(gradient))
             theta[j] = theta[j] - ((alpha/m) * gradient)
+
+        iter += 1
+        if iter == num_iter:
+            break
 
     return min_theta
 
@@ -66,10 +101,13 @@ def predict(X: list, y: list, theta: list):
     for i in range(m):
         hypo[i] = hypothesis(theta, X[i])
 
-    path = os.path.join(os.path.join(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'datasets'), 'redwine'), 'winequality-red.csv')
+    path = os.path.join(os.path.join(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'datasets'), 'redwine'), 'raw-results.csv')
     with open(path, mode='w') as f:
+        f.write('Predicted,Actual,Error')
+        f.write('\n')
         for i in range(m):
-            f.write('Predicted: ' + str(hypo[i]) + ', Actual: ' + y[i] + ', Error: ' + str(y[i] - hypo[i]))
+            f.write(str(hypo[i]) + ',' + str(y[i]) + ',' + str(y[i] - hypo[i]))
+            f.write('\n')
 
 def run(path: str, split=0.7):
     X = []
@@ -80,17 +118,22 @@ def run(path: str, split=0.7):
     with open(path, newline='') as f:
         reader = csv.reader(f)
 
-        #with open(os.path.join(os.path.dirname(path), 'debug.txt'), mode='w') as d:
         for row in reader:
             if skip:
                 skip = False
                 continue 
+            row = [float(x) for x in row]
             data.append(row)
-                # d.write(str(row))
 
     train_x, train_y, test_x, test_y = split_data(data, split)
 
     theta = apply(train_x, train_y)
+    global proj_debug
+    with open(proj_debug, mode='a') as f:
+        f.write('theta\n')
+        f.write('length: ' + str(len(theta)) + '\n')
+        f.write(str(theta))
+
     predict(test_x, test_y, theta)
 
 
@@ -109,10 +152,19 @@ def split_data(data: list, split=0.7) -> tuple:
 
     return (train_x, train_y, test_x, test_y)
 
+# datasets = ''
+# redwine_dir = ''
+
 if __name__ == '__main__':
+    global datasets
+    global redwine_dir
+    global proj_debug
+
     dirname = os.path.dirname(os.path.dirname(__file__))
     datasets = os.path.join(dirname, 'datasets')
-    redwine = os.path.join(os.path.join(datasets, 'redwine'), 'winequality-red.csv')
+    redwine_dir = os.path.join(datasets, 'redwine')
+    redwine = os.path.join(redwine_dir, 'winequality-red.csv')
+    proj_debug = os.path.join(redwine_dir, 'debug.txt')
     
     # print(os.getcwd())
     run(redwine)
