@@ -43,9 +43,8 @@ def apply(X: list, y: list, num_iter=100) -> list:
     m = len(X[0])
     theta = [0] * (m + 1)
     hypo = [0] * len(y)
-    alpha = 0.35
+    alpha = 0.00000005
     min_cost = float('inf')
-    first = True
 
     # print('theta in apply')
     # print_array(theta)
@@ -68,20 +67,15 @@ def apply(X: list, y: list, num_iter=100) -> list:
         # f.write('current cost: ' + str(cur_cost) + '\n')
         # f.write('\n')
 
-        if first:
-            first = False
-            min_cost = cur_cost
+        cur_cost = min(min_cost, cur_cost)
+        if min_cost == cur_cost:
             min_theta = theta
-        else:
-            if cur_cost < min_cost:
-                min_cost = cur_cost
-                min_theta = theta
 
         # Change theta using gradient descent
         for j in range(m + 1):
             gradient = 0
-            for i in range(m):
-                gradient += ((hypo[i] - y[i]) * X[j][i])
+            for i in range(len(y)):
+                gradient += ((hypo[i] - y[i]) * X[i][j])
             print('gradient: ' + str(gradient))
             theta[j] = theta[j] - ((alpha/m) * gradient)
 
@@ -127,7 +121,7 @@ def run(path: str, split=0.7):
 
     train_x, train_y, test_x, test_y = split_data(data, split)
 
-    theta = apply(train_x, train_y)
+    theta = apply(train_x, train_y, 400)
     global proj_debug
     with open(proj_debug, mode='a') as f:
         f.write('theta\n')
