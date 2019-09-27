@@ -1,2 +1,4 @@
 token.mat
 *.zip
+__pycache__
+*.pyc
