@@ -1,23 +1,19 @@
 import os
 import csv
 import random
+from .helper import *
 
 def print_array(arr: list):
     print('Length: ' + str(len(arr)))
     print(arr)
     print()
 
-def hypothesis(theta: list, X: list) -> float:
+def hypothesis(X: list, theta: list) -> float:
     '''
     Returns the hypothesis function result for the given theta and X vectors.
     '''
     m = len(theta)
     ans = 0.0
-
-    # print('theta')
-    # print_array(theta)
-    # print('X')
-    # print_array(X)
 
     for i in range(m):
         ans += theta[i] * X[i]
@@ -27,11 +23,6 @@ def hypothesis(theta: list, X: list) -> float:
 def cost(y: list, theta: list, hypo: list) -> float:
     m = len(y)
     ans = 0.0
-
-    # print('Hypothesis')
-    # print_array(hypo)
-    # print('y')
-    # print_array(y)
 
     for i in range(m):
         ans += ((hypo[i] - y[i]) ** 2)
@@ -43,45 +34,36 @@ def apply(X: list, y: list, num_iter=100) -> list:
     m = len(X[0])
     theta = [0] * (m + 1)
     hypo = [0] * len(y)
-    alpha = 0.00000005
     min_cost = float('inf')
 
-    # print('theta in apply')
-    # print_array(theta)
-
-    # Add bias
     for x in X:
         x.insert(0, 1)
     for i in range(m):
-        hypo[i] = hypothesis(theta, X[i])
+        hypo[i] = hypothesis(X[i], theta)
 
+    hypo_ref = hypo[:]
     iter = 0
 
-    while True:
-        cur_cost = cost(y, theta, hypo)
+    alpha = 10 ** -8
+    while alpha < 100:
+        while iter < num_iter:
+            cur_cost = cost(y, theta, hypo)
 
-        
-        
-        # f.write('iteration #: ' + str(iter) + '\n')
-        # f.write('min cost: ' + str(min_cost) + '\n')
-        # f.write('current cost: ' + str(cur_cost) + '\n')
-        # f.write('\n')
+            min_cost = min(min_cost, cur_cost)
+            if min_cost == cur_cost:
+                min_theta = theta
 
-        cur_cost = min(min_cost, cur_cost)
-        if min_cost == cur_cost:
-            min_theta = theta
+            # Change theta using gradient descent
+            for j in range(m + 1):
+                gradient = 0
+                for i in range(len(y)):
+                    gradient += ((hypo[i] - y[i]) * X[i][j])
+                theta[j] = theta[j] - ((alpha/m) * gradient)
 
-        # Change theta using gradient descent
-        for j in range(m + 1):
-            gradient = 0
-            for i in range(len(y)):
-                gradient += ((hypo[i] - y[i]) * X[i][j])
-            print('gradient: ' + str(gradient))
-            theta[j] = theta[j] - ((alpha/m) * gradient)
+            iter += 1
 
-        iter += 1
-        if iter == num_iter:
-            break
+        hypo = hypo_ref[:]
+        alpha += 10 ** -7
 
     return min_theta
 
@@ -93,7 +75,7 @@ def predict(X: list, y: list, theta: list):
     for x in X:
         x.insert(0, 1)
     for i in range(m):
-        hypo[i] = hypothesis(theta, X[i])
+        hypo[i] = hypothesis(X[i], theta)
 
     path = os.path.join(os.path.join(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'datasets'), 'redwine'), 'raw-results.csv')
     with open(path, mode='w') as f:
@@ -145,23 +127,6 @@ def split_data(data: list, split=0.7) -> tuple:
     test_x = test
 
     return (train_x, train_y, test_x, test_y)
-
-
-def get_redwine_dir():
-    dirname = os.path.dirname(os.path.dirname(__file__))
-    datasets = os.path.join(dirname, 'datasets')
-    redwine_dir = os.path.join(datasets, 'redwine')
-    return redwine_dir
-
-def get_dataset_path():
-    redwine_dir = get_redwine_dir()
-    redwine = os.path.join(redwine_dir, 'winequality-red.csv')
-    return redwine
-
-def get_debug_path():
-    redwine_dir = get_redwine_dir()
-    proj_debug = os.path.join(redwine_dir, 'debug.txt')
-    return proj_debug
     
-#     # print(os.getcwd())
-#     run(redwine)
+def go():
+    run(get_dataset_path())
